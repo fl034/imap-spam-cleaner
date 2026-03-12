@@ -3,11 +3,9 @@ package provider
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/dominicgisler/imap-spam-cleaner/imap"
-	"github.com/dominicgisler/imap-spam-cleaner/logx"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -52,18 +50,6 @@ func (p *OpenAI) Init(config map[string]string) error {
 }
 
 func (p *OpenAI) Analyze(msg imap.Message) (int, error) {
-
-	cont := ""
-	contLen := 0
-	for _, cnt := range msg.Contents {
-		contLen += len(cnt)
-		if contLen > p.maxsize {
-			logx.Debugf("skipping bytes for message #%d (%s)", msg.UID, msg.Subject)
-			break
-		}
-		cont += cnt + "\n"
-	}
-
 	resp, err := p.client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
@@ -71,19 +57,7 @@ func (p *OpenAI) Analyze(msg imap.Message) (int, error) {
 			Messages: []openai.ChatCompletionMessage{
 				{
 					Role: openai.ChatMessageRoleSystem,
-					Content: fmt.Sprintf(
-						"Analyze the following email for its spam potential.\n"+
-							"Return a spam score between 0 and 100. Only answer with the number itself.\n\n"+
-							"From: %s\nTo: %s\nDelivered-To: %s\nCc: %s\nBcc: %s\nSubject: %s\n\n"+
-							"Content:\n%s",
-						msg.From,
-						msg.To,
-						msg.DeliveredTo,
-						msg.Cc,
-						msg.Bcc,
-						msg.Subject,
-						cont,
-					),
+					Content: analysisPrompt(msg, p.maxsize),
 				},
 			},
 		},
@@ -93,10 +67,5 @@ func (p *OpenAI) Analyze(msg imap.Message) (int, error) {
 		return 0, err
 	}
 
-	i, err := strconv.ParseInt(resp.Choices[0].Message.Content, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(i), nil
+	return parseScore(resp.Choices[0].Message.Content)
 }
