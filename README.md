@@ -105,6 +105,17 @@ providers:                        # providers to be used for inboxes
       model: gpt-oss:20b          # ollama model to use
       maxsize: 100000             # message size limit for prompt (bytes)
   prov3:                          # provider name
+    type: nvidia                  # provider type
+    config:                       # provider specific configuration
+      apikey: some-api-key        # nvidia api key
+      model: moonshotai/kimi-k2.5 # nvidia hosted model to use
+      maxsize: 100000             # message size limit for prompt (bytes)
+      maxtokens: 16384            # max tokens for the model response
+      temperature: 1.0            # sampling temperature
+      topp: 1.0                   # top-p sampling value
+      thinking: "true"            # thinking mode (quoted because provider config values are strings)
+      timeout: 180s               # request timeout
+  prov4:                          # provider name
     type: spamassassin            # provider type
     config:                       # provider specific configuration
       host: 127.0.0.1             # spamassassin host
@@ -135,6 +146,35 @@ inboxes:                          # inboxes to be checked
     maxage: 24h                   # max age of message
     whitelist: whitelist1         # whitelist to use, empty/missing = no whitelist
 ```
+
+### NVIDIA Cloud with Kimi K2.5
+
+NVIDIA exposes `moonshotai/kimi-k2.5` through an OpenAI-style chat completions API. This project now supports it with the `nvidia` provider type.
+
+```yaml
+providers:
+  kimi:
+    type: nvidia
+    config:
+      apikey: your-nvidia-api-key
+      model: moonshotai/kimi-k2.5
+      maxsize: 100000
+      maxtokens: 16384
+      temperature: 1.0
+      topp: 1.0
+      thinking: "true"
+      timeout: 180s
+```
+
+Optional `nvidia` config keys:
+
+- `url`: override the default endpoint (`https://integrate.api.nvidia.com/v1/chat/completions`)
+- `model`: defaults to `moonshotai/kimi-k2.5`
+- `maxtokens`: defaults to `16384`
+- `temperature`: defaults to `1.0`
+- `topp`: defaults to `1.0`
+- `thinking`: defaults to `true`; set to `"false"` for instant mode
+- `timeout`: defaults to `180s`; accepts Go durations like `30s` or `2m`, or a positive number of seconds
 
 ## Contributors
 

@@ -15,6 +15,17 @@ providers:                        # providers to be used for inboxes
       model: gpt-oss:20b          # model to use
       maxsize: 100000             # message size limit for prompt (bytes)
   prov3:                          # provider name
+    type: nvidia                  # provider type
+    config:                       # provider specific configuration
+      apikey: some-api-key        # nvidia api key
+      model: moonshotai/kimi-k2.5 # nvidia hosted model to use
+      maxsize: 100000             # message size limit for prompt (bytes)
+      maxtokens: 16384            # max tokens for the model response
+      temperature: 1.0            # sampling temperature
+      topp: 1.0                   # top-p sampling value
+      thinking: "true"            # thinking mode (quoted because provider config values are strings)
+      timeout: 180s               # request timeout
+  prov4:                          # provider name
     type: spamassassin            # provider type
     config:                       # provider specific configuration
       host: 127.0.0.1             # spamassassin host
