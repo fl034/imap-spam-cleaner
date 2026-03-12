@@ -1,0 +1,27 @@
+services:
+  imap-spam-cleaner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: dev
+    image: imap-spam-cleaner:dev
+    restart: "no"
+
+  imap-spam-cleaner-run-once:
+    profiles:
+      - run-once
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: dev
+    image: imap-spam-cleaner:dev
+    container_name: imap-spam-cleaner-run-once
+    hostname: imap-spam-cleaner-run-once
+    restart: "no"
+    command:
+      - -now
+      - -analyze-only
+    volumes:
+      - ./config.yml:/app/config.yml:ro

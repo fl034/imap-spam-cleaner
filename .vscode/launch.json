@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "imap-spam-cleaner: Docker run once (analyze only)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "docker compose --profile run-once up --build imap-spam-cleaner-run-once"
+    },
+    {
+      "name": "imap-spam-cleaner: Run once (analyze only)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "-now",
+        "-analyze-only"
+      ]
+    },
+    {
+      "name": "imap-spam-cleaner: Run scheduler",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
