@@ -1,9 +1,14 @@
 services:
   imap-spam-cleaner:
-    image: dominicgisler/imap-spam-cleaner:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: local
+    image: imap-spam-cleaner:local
     container_name: imap-spam-cleaner
     hostname: imap-spam-cleaner
-    restart: always
+    restart: unless-stopped
     volumes:
       - ./config.yml:/app/config.yml:ro
 
