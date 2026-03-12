@@ -80,12 +80,10 @@ func (i *Imap) LoadMessages() ([]Message, error) {
 	}
 	logx.Debugf("Found %d messages in inbox", mbox.NumMessages)
 
-	searchCrit := &imap.SearchCriteria{}
-	if i.cfg.MinAge > 0 {
-		searchCrit.Before = time.Now().Add(-i.cfg.MinAge)
-	}
-	if i.cfg.MaxAge > 0 {
-		searchCrit.Since = time.Now().Add(-i.cfg.MaxAge)
+	searchCrit := searchCriteria(i.cfg)
+
+	if len(searchCrit.NotFlag) > 0 {
+		logx.Debugf("Filtering messages by flags: excluding %v", searchCrit.NotFlag)
 	}
 
 	uidRes, err := i.client.UIDSearch(searchCrit, nil).Wait()
@@ -171,6 +169,20 @@ func (i *Imap) LoadMessages() ([]Message, error) {
 	}
 
 	return messages, nil
+}
+
+func searchCriteria(cfg config.Inbox) *imap.SearchCriteria {
+	searchCrit := &imap.SearchCriteria{}
+	if cfg.MinAge > 0 {
+		searchCrit.Before = time.Now().Add(-cfg.MinAge)
+	}
+	if cfg.MaxAge > 0 {
+		searchCrit.Since = time.Now().Add(-cfg.MaxAge)
+	}
+	if cfg.Unread {
+		searchCrit.NotFlag = append(searchCrit.NotFlag, imap.FlagSeen)
+	}
+	return searchCrit
 }
 
 func (i *Imap) MoveMessage(uid imap.UID, mailbox string) error {
