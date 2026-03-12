@@ -1,4 +1,6 @@
 .idea/
+.git/
+.config.yml
 config.example.yml
 config.yml
 docker-compose.yml
