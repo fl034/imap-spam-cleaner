@@ -10,7 +10,7 @@ services:
     hostname: imap-spam-cleaner
     restart: unless-stopped
     volumes:
-      - ./config.yml:/app/config.yml:ro
+      - ./.config.yml:/app/config.yml:ro
 
 # SpamAssassin is an optional service
 #  spamassassin:
