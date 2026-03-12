@@ -8,6 +8,12 @@
       "command": "docker compose --profile run-once up --build imap-spam-cleaner-run-once"
     },
     {
+      "name": "imap-spam-cleaner: Docker run once (compose build, move mail)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "docker compose -f docker-compose.yml -f docker-compose.override.yml run --build --rm imap-spam-cleaner -now"
+    },
+    {
       "name": "imap-spam-cleaner: Run once (analyze only)",
       "type": "go",
       "request": "launch",
