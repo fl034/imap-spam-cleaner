@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"time"
 
 	"github.com/dominicgisler/imap-spam-cleaner/config"
@@ -36,17 +37,24 @@ func New(cfg config.Inbox) (*Imap, error) {
 	}
 
 	if err != nil {
-		i.Close()
+		if closeErr := i.Close(); closeErr != nil {
+			logx.Warnf("failed to close IMAP connection after dial error: %v", closeErr)
+		}
 		return nil, fmt.Errorf("failed to dial IMAP server: %w", err)
 	}
 
 	if err = i.client.Login(cfg.Username, cfg.Password).Wait(); err != nil {
-		i.Close()
+		if closeErr := i.Close(); closeErr != nil {
+			logx.Warnf("failed to close IMAP connection after login error: %v", closeErr)
+		}
 		return nil, fmt.Errorf("failed to login: %w", err)
 	}
 
 	mailboxes, err = i.client.List("", "*", nil).Collect()
 	if err != nil {
+		if closeErr := i.Close(); closeErr != nil {
+			logx.Warnf("failed to close IMAP connection after mailbox list error: %v", closeErr)
+		}
 		return nil, fmt.Errorf("failed to list mailboxes: %w", err)
 	}
 
@@ -58,11 +66,35 @@ func New(cfg config.Inbox) (*Imap, error) {
 	return i, nil
 }
 
-func (i *Imap) Close() {
-	if i.client != nil {
-		i.client.Logout()
-		_ = i.client.Close()
+func (i *Imap) Close() error {
+	if i.client == nil {
+		return nil
 	}
+
+	client := i.client
+	i.client = nil
+
+	logoutErr := client.Logout().Wait()
+	closeErr := client.Close()
+
+	if isIgnorableCloseError(logoutErr) {
+		logoutErr = nil
+	}
+	if isIgnorableCloseError(closeErr) {
+		closeErr = nil
+	}
+
+	if logoutErr != nil && closeErr != nil {
+		return errors.Join(logoutErr, closeErr)
+	}
+	if logoutErr != nil {
+		return logoutErr
+	}
+	return closeErr
+}
+
+func isIgnorableCloseError(err error) bool {
+	return err == nil || errors.Is(err, net.ErrClosed) || errors.Is(err, io.ErrClosedPipe)
 }
 
 func (i *Imap) LoadMessages() ([]Message, error) {

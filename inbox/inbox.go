@@ -74,10 +74,14 @@ func processInbox(ctx app.Context, inbox config.Inbox, prov config.Provider) {
 		logx.Errorf("Could not load imap: %v\n", err)
 		return
 	}
+	defer func() {
+		if closeErr := im.Close(); closeErr != nil {
+			logx.Warnf("Could not close IMAP connection for %s: %v", inbox.Username, closeErr)
+		}
+	}()
 
 	if msgs, err = im.LoadMessages(); err != nil {
 		logx.Errorf("Could not load messages: %v\n", err)
-		im.Close()
 		return
 	}
 	logx.Infof("Loaded %d messages", len(msgs))
@@ -85,13 +89,11 @@ func processInbox(ctx app.Context, inbox config.Inbox, prov config.Provider) {
 	p, err = provider.New(prov.Type)
 	if err != nil {
 		logx.Errorf("Could not load provider: %v\n", err)
-		im.Close()
 		return
 	}
 
 	if err = p.Init(prov.Config); err != nil {
 		logx.Errorf("Could not init provider: %v\n", err)
-		im.Close()
 		return
 	}
 
@@ -131,6 +133,4 @@ func processInbox(ctx app.Context, inbox config.Inbox, prov config.Provider) {
 		}
 	}
 	logx.Infof("Moved %d messages", moved)
-
-	im.Close()
 }
