@@ -116,6 +116,12 @@ providers:                        # providers to be used for inboxes
       thinking: "true"            # thinking mode (quoted because provider config values are strings)
       timeout: 180s               # request timeout
   prov4:                          # provider name
+    type: codex                   # local Codex CLI provider
+    config:
+      model: gpt-5.3-codex        # optional; omit to use the Codex CLI default
+      maxsize: 100000             # message size limit for prompt (bytes)
+      timeout: 180s               # command timeout
+  prov5:                          # provider name
     type: spamassassin            # provider type
     config:                       # provider specific configuration
       host: 127.0.0.1             # spamassassin host
@@ -176,6 +182,44 @@ Optional `nvidia` config keys:
 - `topp`: defaults to `1.0`
 - `thinking`: defaults to `true`; set to `"false"` for instant mode
 - `timeout`: defaults to `180s`; accepts Go durations like `30s` or `2m`, or a positive number of seconds
+
+### Local Codex CLI
+
+The `codex` provider runs `codex exec` once per email. It uses an ephemeral session, a read-only sandbox, an isolated temporary working directory, and a JSON output schema. Codex progress stays on stderr; only the structured final score is parsed.
+
+```yaml
+providers:
+  local-codex:
+    type: codex
+    config:
+      model: gpt-5.3-codex # optional; omit to use the CLI default
+      maxsize: 100000
+      timeout: 180s
+```
+
+Optional `codex` config keys:
+
+- `command`: executable name or path; defaults to `codex`
+- `model`: Codex model override; omitted by default
+- `timeout`: defaults to `180s`; accepts Go durations such as `30s` or `2m`
+
+The Docker image includes the Codex CLI. Give the container a dedicated writable Codex home so refreshed login tokens persist without exposing the rest of your normal Codex configuration:
+
+```console
+mkdir -p ~/.codex-imap-spam-cleaner
+cp ~/.codex/auth.json ~/.codex-imap-spam-cleaner/auth.json
+chmod 600 ~/.codex-imap-spam-cleaner/auth.json
+docker compose up -d --build
+```
+
+The included Compose file mounts that directory at `/root/.codex`.
+Treat its `auth.json` as a password: never commit it or expose it in logs.
+
+Check the configured provider without connecting to IMAP or moving mail:
+
+```console
+docker compose run --rm imap-spam-cleaner --check-provider local-codex
+```
 
 ## Contributors
 

@@ -26,6 +26,12 @@ providers:                        # providers to be used for inboxes
       thinking: "true"            # thinking mode (quoted because provider config values are strings)
       timeout: 180s               # request timeout
   prov4:                          # provider name
+    type: codex                   # local Codex CLI provider
+    config:
+      model: gpt-5.3-codex        # optional; omit to use the Codex CLI default
+      maxsize: 100000             # message size limit for prompt (bytes)
+      timeout: 180s               # command timeout
+  prov5:                          # provider name
     type: spamassassin            # provider type
     config:                       # provider specific configuration
       host: 127.0.0.1             # spamassassin host

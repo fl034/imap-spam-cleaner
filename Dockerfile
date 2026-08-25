@@ -15,7 +15,10 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 	GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 \
 	go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/imap-spam-cleaner .
 
-FROM alpine:latest
+FROM node:24-alpine
+ARG CODEX_VERSION=0.149.1
+RUN npm install --global "@openai/codex@${CODEX_VERSION}" \
+	&& npm cache clean --force
 WORKDIR /app
 COPY --from=build /out/imap-spam-cleaner /app/imap-spam-cleaner
 ENTRYPOINT [ "/app/imap-spam-cleaner" ]

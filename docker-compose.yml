@@ -11,6 +11,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./.config.yml:/app/config.yml:ro
+      - ${HOME}/.codex-imap-spam-cleaner:/root/.codex
 
 # SpamAssassin is an optional service
 #  spamassassin:

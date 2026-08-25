@@ -25,7 +25,7 @@ type Logging struct {
 }
 
 type Provider struct {
-	Type   string            `yaml:"type"   validate:"required,oneof=openai ollama nvidia spamassassin"`
+	Type   string            `yaml:"type"   validate:"required,oneof=openai ollama nvidia codex spamassassin"`
 	Config map[string]string `yaml:"config" validate:"required"`
 }
 
