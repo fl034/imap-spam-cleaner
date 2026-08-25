@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dominicgisler/imap-spam-cleaner/config"
+	"github.com/dominicgisler/imap-spam-cleaner/app"
 	goimap "github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 )
 
 func TestSearchCriteriaUnread(t *testing.T) {
-	criteria := searchCriteria(config.Inbox{Unread: true})
+	criteria := searchCriteria(app.Inbox{Unread: true})
 
 	if len(criteria.NotFlag) != 1 {
 		t.Fatalf("expected exactly one excluded flag, got %d", len(criteria.NotFlag))
@@ -25,7 +25,7 @@ func TestSearchCriteriaUnread(t *testing.T) {
 }
 
 func TestSearchCriteriaAgeWindow(t *testing.T) {
-	criteria := searchCriteria(config.Inbox{
+	criteria := searchCriteria(app.Inbox{
 		MinAge: 2 * time.Hour,
 		MaxAge: 24 * time.Hour,
 	})
@@ -200,30 +200,42 @@ func TestNewClosesConnectionWhenListFails(t *testing.T) {
 		}
 
 	waitForLogout:
-
-		logoutLine, err := reader.ReadString('\n')
-		if err != nil {
-			serverDone <- err
-			return
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				serverDone <- err
+				return
+			}
+			tag := strings.Fields(line)[0]
+			switch {
+			case strings.Contains(line, " CAPABILITY"):
+				if _, err := writer.WriteString("* CAPABILITY IMAP4rev1\r\n" + tag + " OK CAPABILITY completed\r\n"); err != nil {
+					serverDone <- err
+					return
+				}
+			case strings.Contains(line, " LOGOUT"):
+				if _, err := writer.WriteString("* BYE logging out\r\n" + tag + " OK logout completed\r\n"); err != nil {
+					serverDone <- err
+					return
+				}
+				if err := writer.Flush(); err != nil {
+					serverDone <- err
+					return
+				}
+				serverDone <- nil
+				return
+			default:
+				serverDone <- fmt.Errorf("expected CAPABILITY or LOGOUT after LIST failure, got %q", strings.TrimSpace(line))
+				return
+			}
+			if err := writer.Flush(); err != nil {
+				serverDone <- err
+				return
+			}
 		}
-		if !strings.Contains(logoutLine, " LOGOUT") {
-			serverDone <- fmt.Errorf("expected LOGOUT command after LIST failure, got %q", strings.TrimSpace(logoutLine))
-			return
-		}
-		logoutTag := strings.Fields(logoutLine)[0]
-		if _, err := writer.WriteString("* BYE logging out\r\n" + logoutTag + " OK logout completed\r\n"); err != nil {
-			serverDone <- err
-			return
-		}
-		if err := writer.Flush(); err != nil {
-			serverDone <- err
-			return
-		}
-
-		serverDone <- nil
 	}()
 
-	_, err = New(config.Inbox{
+	_, err = New(app.Inbox{
 		Host:     "127.0.0.1",
 		Port:     listener.Addr().(*net.TCPAddr).Port,
 		Username: "user@example.com",

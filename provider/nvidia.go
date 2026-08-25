@@ -36,13 +36,13 @@ type nvidiaChatMessage struct {
 }
 
 type nvidiaChatRequest struct {
-	Model              string               `json:"model"`
-	Messages           []nvidiaChatMessage  `json:"messages"`
-	MaxTokens          int                  `json:"max_tokens"`
-	Temperature        float64              `json:"temperature"`
-	TopP               float64              `json:"top_p"`
-	Stream             bool                 `json:"stream"`
-	ChatTemplateKwargs map[string]bool      `json:"chat_template_kwargs,omitempty"`
+	Model              string              `json:"model"`
+	Messages           []nvidiaChatMessage `json:"messages"`
+	MaxTokens          int                 `json:"max_tokens"`
+	Temperature        float64             `json:"temperature"`
+	TopP               float64             `json:"top_p"`
+	Stream             bool                `json:"stream"`
+	ChatTemplateKwargs map[string]bool     `json:"chat_template_kwargs,omitempty"`
 }
 
 type nvidiaChatResponse struct {

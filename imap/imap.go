@@ -8,7 +8,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/dominicgisler/imap-spam-cleaner/config"
+	"github.com/dominicgisler/imap-spam-cleaner/app"
 	"github.com/dominicgisler/imap-spam-cleaner/logx"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
@@ -18,10 +18,10 @@ import (
 
 type Imap struct {
 	client *imapclient.Client
-	cfg    config.Inbox
+	cfg    app.Inbox
 }
 
-func New(cfg config.Inbox) (*Imap, error) {
+func New(cfg app.Inbox) (*Imap, error) {
 
 	var err error
 	var mailboxes []*imap.ListData
@@ -129,8 +129,9 @@ func (i *Imap) LoadMessages() ([]Message, error) {
 	}
 
 	fetchOptions := &imap.FetchOptions{
-		Envelope: true,
-		UID:      true,
+		Envelope:     true,
+		InternalDate: true,
+		UID:          true,
 		BodySection: []*imap.FetchItemBodySection{
 			{
 				Peek: true,
@@ -156,6 +157,17 @@ func (i *Imap) LoadMessages() ([]Message, error) {
 			continue
 		}
 
+		var rawHeader []byte
+		headers := mr.Header.Fields()
+		for headers.Next() {
+			headerBytes, err := headers.Raw()
+			if err != nil {
+				logx.Warnf("failed to read message fields: %v\n", err)
+				continue
+			}
+			rawHeader = append(rawHeader, headerBytes...)
+		}
+
 		message := Message{
 			UID:         msg.UID,
 			DeliveredTo: mr.Header.Get("Delivered-To"),
@@ -165,12 +177,9 @@ func (i *Imap) LoadMessages() ([]Message, error) {
 			Bcc:         mr.Header.Get("Bcc"),
 			Subject:     msg.Envelope.Subject,
 			Contents:    []string{},
-			Raw:         b, // Raw original message bytes. Useful for traditional spam filters.
-		}
-
-		if message.Date, err = mr.Header.Date(); err != nil {
-			logx.Warnf("failed to load message date (msg.UID=%d): %v\n", msg.UID, err)
-			continue
+			Date:        msg.InternalDate,
+			Raw:         b,
+			RawHeader:   rawHeader,
 		}
 
 		if i.cfg.MinAge > 0 && message.Date.After(time.Now().Add(-i.cfg.MinAge)) || i.cfg.MaxAge > 0 && message.Date.Before(time.Now().Add(-i.cfg.MaxAge)) {
@@ -203,7 +212,7 @@ func (i *Imap) LoadMessages() ([]Message, error) {
 	return messages, nil
 }
 
-func searchCriteria(cfg config.Inbox) *imap.SearchCriteria {
+func searchCriteria(cfg app.Inbox) *imap.SearchCriteria {
 	searchCrit := &imap.SearchCriteria{}
 	if cfg.MinAge > 0 {
 		searchCrit.Before = time.Now().Add(-cfg.MinAge)

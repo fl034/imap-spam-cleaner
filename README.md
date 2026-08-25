@@ -1,6 +1,6 @@
 # IMAP spam cleaner
 
-![logo](assets/icon_128.png)
+![logo](docs/assets/icon_128.png)
 
 [![Latest release](https://img.shields.io/github/v/release/dominicgisler/imap-spam-cleaner?style=for-the-badge)](https://github.com/dominicgisler/imap-spam-cleaner/releases)
 [![License](https://img.shields.io/github/license/dominicgisler/imap-spam-cleaner?style=for-the-badge)](https://github.com/dominicgisler/imap-spam-cleaner/blob/master/LICENSE)
@@ -12,7 +12,9 @@
 
 A tool to clean up spam in your imap inbox.
 
-## How does it work
+Check the [Documentation](https://dominicgisler.github.io/imap-spam-cleaner) for detailed information.
+
+## Summary
 
 This application loads mails from configured imap inboxes and checks their contents using the defined provider.
 Depending on a spam score, the message can be moved to the spam folder, keeping your inbox clean.
@@ -43,185 +45,9 @@ DEBUG  [2026-02-28T16:55:32Z] Spam score of message #483 (Vermögen x4 zu Fest):
 INFO   [2026-02-28T16:55:32Z] Moved 4 messages
 ```
 
-## How to use
-
-### Using image from docker hub (recommended)
-
-- Create `config.yml` matching your inboxes (example below)
-- Create `docker-compose.yml` if using `docker compose` (example below)
-- Start the container with: `docker compose up -d`
-- Or with: `docker run -d --name imap-spam-cleaner -v ./config.yml:/app/config.yml dominicgisler/imap-spam-cleaner`
-
-### From source with local Go installation
-
-- Clone this repository
-- Install Go version 1.25+
-- Load dependencies (`go get ./...`)
-- Create `config.yml` matching your inboxes (example below)
-- Run the application (`go run .`)
-
-### From source with docker
-
-- Clone this repository
-- Install docker
-- Build the docker image: `docker build -f Dockerfile -t dominicgisler/imap-spam-cleaner .`
-- Create `config.yml` matching your inboxes (example below)
-- Create `docker-compose.yml` if using `docker compose` (example below)
-- Start the container with: `docker compose up -d`
-- Or with: `docker run -d --name imap-spam-cleaner -v ./config.yml:/app/config.yml dominicgisler/imap-spam-cleaner`
-
-### Sample docker-compose.yml
-
-```yaml
-services:
-  imap-spam-cleaner:
-    image: dominicgisler/imap-spam-cleaner:latest
-    container_name: imap-spam-cleaner
-    hostname: imap-spam-cleaner
-    restart: always
-    volumes:
-      - ./config.yml:/app/config.yml:ro
-```
-
-### Configuration
-
-Use this configuration as an example for your own setup. Save the file as `config.yml` on your disk (where the application will run) or mount the correct path into the docker container.
-
-```yaml
-logging:
-  level: debug                    # logging level (panic, fatal, error, warn, info, debug, trace)
-
-providers:                        # providers to be used for inboxes
-  prov1:                          # provider name
-    type: openai                  # provider type
-    config:                       # provider specific configuration
-      apikey: some-api-key        # openai apikey
-      model: gpt-4o-mini          # openai model to use
-      maxsize: 100000             # message size limit for prompt (bytes)
-  prov2:                          # provider name
-    type: ollama                  # provider type
-    config:                       # provider specific configuration
-      url: http://127.0.0.1:11434 # ollama url
-      model: gpt-oss:20b          # ollama model to use
-      maxsize: 100000             # message size limit for prompt (bytes)
-  prov3:                          # provider name
-    type: nvidia                  # provider type
-    config:                       # provider specific configuration
-      apikey: some-api-key        # nvidia api key
-      model: moonshotai/kimi-k2.5 # nvidia hosted model to use
-      maxsize: 100000             # message size limit for prompt (bytes)
-      maxtokens: 16384            # max tokens for the model response
-      temperature: 1.0            # sampling temperature
-      topp: 1.0                   # top-p sampling value
-      thinking: "true"            # thinking mode (quoted because provider config values are strings)
-      timeout: 180s               # request timeout
-  prov4:                          # provider name
-    type: codex                   # local Codex CLI provider
-    config:
-      model: gpt-5.3-codex        # optional; omit to use the Codex CLI default
-      maxsize: 100000             # message size limit for prompt (bytes)
-      timeout: 180s               # command timeout
-  prov5:                          # provider name
-    type: spamassassin            # provider type
-    config:                       # provider specific configuration
-      host: 127.0.0.1             # spamassassin host
-      port: 783                   # spamassassin port
-      maxsize: 300000             # message size limit
-      timeout: 10s                # connection timeout
-
-whitelists:                       # trusted senders as regexp, not to be analyzed
-  whitelist1:                     # example with exact addresses
-    - ^.* <info@example.com>$     # matches <info@example.com>
-    - ^.* <contact@domain.com>$   # matches <contact@domain.com>
-  whitelist2:                     # example with only domain match
-    - ^.* <.*@example.com>$       # matches for all @example.com addresses
-    - ^.* <.*@domain.com>$        # matches for all @domain.com addresses
-
-inboxes:                          # inboxes to be checked
-  - schedule: "* * * * *"         # schedule in cron format (when to execute spam analysis)
-    host: mail.domain.tld         # imap host
-    port: 143                     # imap port
-    tls: false                    # imap tls
-    unread: true                  # only check unread messages
-    username: user@domain.tld     # imap user
-    password: mypass              # imap password
-    provider: prov1               # provider used for spam analysis
-    inbox: INBOX                  # inbox folder
-    spam: INBOX.Spam              # spam folder
-    minscore: 75                  # min score to detect spam (0-100)
-    minage: 0h                    # min age of message
-    maxage: 24h                   # max age of message
-    whitelist: whitelist1         # whitelist to use, empty/missing = no whitelist
-```
-
-### NVIDIA Cloud with Kimi K2.5
-
-NVIDIA exposes `moonshotai/kimi-k2.5` through an OpenAI-style chat completions API. This project now supports it with the `nvidia` provider type.
-
-```yaml
-providers:
-  kimi:
-    type: nvidia
-    config:
-      apikey: your-nvidia-api-key
-      model: moonshotai/kimi-k2.5
-      maxsize: 100000
-      maxtokens: 16384
-      temperature: 1.0
-      topp: 1.0
-      thinking: "true"
-      timeout: 180s
-```
-
-Optional `nvidia` config keys:
-
-- `url`: override the default endpoint (`https://integrate.api.nvidia.com/v1/chat/completions`)
-- `model`: defaults to `moonshotai/kimi-k2.5`
-- `maxtokens`: defaults to `16384`
-- `temperature`: defaults to `1.0`
-- `topp`: defaults to `1.0`
-- `thinking`: defaults to `true`; set to `"false"` for instant mode
-- `timeout`: defaults to `180s`; accepts Go durations like `30s` or `2m`, or a positive number of seconds
-
-### Local Codex CLI
-
-The `codex` provider runs `codex exec` once per email. It uses an ephemeral session, a read-only sandbox, an isolated temporary working directory, and a JSON output schema. Codex progress stays on stderr; only the structured final score is parsed.
-
-```yaml
-providers:
-  local-codex:
-    type: codex
-    config:
-      model: gpt-5.3-codex # optional; omit to use the CLI default
-      maxsize: 100000
-      timeout: 180s
-```
-
-Optional `codex` config keys:
-
-- `command`: executable name or path; defaults to `codex`
-- `model`: Codex model override; omitted by default
-- `timeout`: defaults to `180s`; accepts Go durations such as `30s` or `2m`
-
-The Docker image includes the Codex CLI. Give the container a dedicated writable Codex home so refreshed login tokens persist without exposing the rest of your normal Codex configuration:
-
-```console
-mkdir -p ~/.codex-imap-spam-cleaner
-cp ~/.codex/auth.json ~/.codex-imap-spam-cleaner/auth.json
-chmod 600 ~/.codex-imap-spam-cleaner/auth.json
-docker compose up -d --build
-```
-
-The included Compose file mounts that directory at `/root/.codex`.
-Treat its `auth.json` as a password: never commit it or expose it in logs.
-
-Check the configured provider without connecting to IMAP or moving mail:
-
-```console
-docker compose run --rm imap-spam-cleaner --check-provider local-codex
-```
-
 ## Contributors
+
+Feel free to contribute to this project, check the [Contribution Guidelines](CONTRIBUTING.md) for more information.
 
 <!-- readme: contributors -start -->
 <table>
@@ -239,6 +65,13 @@ docker compose run --rm imap-spam-cleaner --check-provider local-codex
                     <img src="https://avatars.githubusercontent.com/u/1652722?v=4" width="100;" alt="nistei"/>
                     <br />
                     <sub><b>Niklas Steiner</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/alanpbaldwin">
+                    <img src="https://avatars.githubusercontent.com/u/1648277?v=4" width="100;" alt="alanpbaldwin"/>
+                    <br />
+                    <sub><b>alanpbaldwin</b></sub>
                 </a>
             </td>
 		</tr>

@@ -9,9 +9,12 @@ services:
     container_name: imap-spam-cleaner
     hostname: imap-spam-cleaner
     restart: unless-stopped
+    ports:
+      - "8080:8080"
     volumes:
       - ./.config.yml:/app/config.yml:ro
       - ${HOME}/.codex-imap-spam-cleaner:/root/.codex
+      - ./store.db:/app/store.db:rw
 
 # SpamAssassin is an optional service
 #  spamassassin:

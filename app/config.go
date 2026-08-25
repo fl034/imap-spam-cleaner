@@ -1,4 +1,4 @@
-package config
+package app
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ type Logging struct {
 }
 
 type Provider struct {
-	Type   string            `yaml:"type"   validate:"required,oneof=openai ollama nvidia codex spamassassin"`
+	Type   string            `yaml:"type"   validate:"required,oneof=openai ollama nvidia codex spamassassin gemini rspamd"`
 	Config map[string]string `yaml:"config" validate:"required"`
 }
 
@@ -46,7 +46,7 @@ type Inbox struct {
 	Whitelist string        `yaml:"whitelist" validate:"omitempty"`
 }
 
-func Load() (*Config, error) {
+func LoadConfig() (*Config, error) {
 
 	data, err := os.ReadFile(configPath)
 	if err != nil {

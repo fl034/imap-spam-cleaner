@@ -1,3 +1,5 @@
-.idea/
+/.idea/
+/site/
 config.yml
 .config.yml
+store.db

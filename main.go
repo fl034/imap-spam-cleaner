@@ -6,14 +6,15 @@ import (
 	"os"
 
 	"github.com/dominicgisler/imap-spam-cleaner/app"
-	"github.com/dominicgisler/imap-spam-cleaner/config"
+	"github.com/dominicgisler/imap-spam-cleaner/database"
+	"github.com/dominicgisler/imap-spam-cleaner/handler"
 	"github.com/dominicgisler/imap-spam-cleaner/imap"
 	"github.com/dominicgisler/imap-spam-cleaner/inbox"
 	"github.com/dominicgisler/imap-spam-cleaner/logx"
 	"github.com/dominicgisler/imap-spam-cleaner/provider"
 )
 
-const name = "imap-spam-cleaner"
+const appName = "imap-spam-cleaner"
 
 var version = "dev"
 var options app.Options
@@ -27,17 +28,21 @@ func init() {
 	flag.StringVar(&checkProviderName, "check-provider", "", "Run a non-destructive connectivity check for one configured provider")
 	flag.Parse()
 	if v {
-		fmt.Printf("%s %s\n", name, version)
+		fmt.Printf("%s %s\n", appName, version)
 		os.Exit(0)
 	}
 }
 
 func main() {
-	logx.Infof("Starting %s %s", name, version)
-	c, err := config.Load()
+	logx.Infof("Starting %s %s", appName, version)
+	c, err := app.LoadConfig()
 	if err != nil {
 		logx.Errorf("Could not load config: %v", err)
 		return
+	}
+
+	if err = database.Init("store.db"); err != nil {
+		logx.Errorf("Could not init database: %v", err)
 	}
 
 	ctx := app.Context{
@@ -92,6 +97,12 @@ func main() {
 		inbox.RunAllInboxes(ctx)
 		return
 	}
+
+	go func() {
+		if err = handler.ListenAndServe(); err != nil {
+			logx.Errorf("Error starting handler: %v", err)
+		}
+	}()
 
 	inbox.Schedule(ctx)
 }

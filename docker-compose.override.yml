@@ -16,3 +16,5 @@ services:
       - -analyze-only
     volumes:
       - ./.config.yml:/app/config.yml:ro
+      - ${HOME}/.codex-imap-spam-cleaner:/root/.codex
+      - ./store.db:/app/store.db:rw

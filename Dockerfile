@@ -1,5 +1,5 @@
 ## syntax=docker/dockerfile:1.7
-FROM --platform=$BUILDPLATFORM golang:1.25 AS build
+FROM --platform=$BUILDPLATFORM golang:1.26 AS build
 WORKDIR /app
 ARG TARGETOS=linux
 ARG TARGETARCH
@@ -21,4 +21,6 @@ RUN npm install --global "@openai/codex@${CODEX_VERSION}" \
 	&& npm cache clean --force
 WORKDIR /app
 COPY --from=build /out/imap-spam-cleaner /app/imap-spam-cleaner
+RUN touch store.db
+EXPOSE 8080
 ENTRYPOINT [ "/app/imap-spam-cleaner" ]
