@@ -6,6 +6,7 @@
 | `host`      | string   | yes      | IMAP server hostname                                    | `mail.domain.tld` |
 | `port`      | integer  | yes      | IMAP port                                               | `143`             |
 | `tls`       | boolean  | no       | Enable TLS                                              | `false`           |
+| `markread`  | boolean  | no       | Mark spam messages as read before moving them           | `false`           |
 | `username`  | string   | yes      | IMAP username                                           | `user@domain.tld` |
 | `password`  | string   | yes      | IMAP password                                           | `mypass`          |
 | `provider`  | string   | yes      | Provider used for spam detection                        | `prov1`           |
@@ -22,6 +23,7 @@ inboxes:
     host: mail.domain.tld
     port: 143
     tls: false
+    markread: false
     username: user@domain.tld
     password: mypass
     provider: prov1

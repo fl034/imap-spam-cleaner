@@ -132,7 +132,7 @@ func processInbox(ctx app.Context, inbox app.Inbox, prov app.Provider) {
 				continue
 			}
 
-			if err = im.MoveMessage(m.UID, inbox.Spam); err != nil {
+			if err = im.MoveMessage(m.UID, inbox.Spam, inbox.MarkRead); err != nil {
 				logx.Errorf("Could not move message (%s): %v\n", m.Subject, err)
 				continue
 			}

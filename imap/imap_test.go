@@ -51,6 +51,93 @@ func TestSearchCriteriaAgeWindow(t *testing.T) {
 	}
 }
 
+func TestMoveMessageMarkReadOption(t *testing.T) {
+	tests := []struct {
+		name             string
+		markRead         bool
+		expectedCommands []string
+	}{
+		{
+			name:     "enabled",
+			markRead: true,
+			expectedCommands: []string{
+				" UID STORE 42 +FLAGS.SILENT (\\Seen)",
+				` UID MOVE 42 "Spam"`,
+			},
+		},
+		{
+			name:             "disabled",
+			markRead:         false,
+			expectedCommands: []string{` UID MOVE 42 "Spam"`},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			clientConn, serverConn := net.Pipe()
+			t.Cleanup(func() {
+				_ = clientConn.Close()
+				_ = serverConn.Close()
+			})
+
+			serverDone := make(chan error, 1)
+			go func() {
+				defer serverConn.Close()
+
+				reader := bufio.NewReader(serverConn)
+				writer := bufio.NewWriter(serverConn)
+
+				if _, err := writer.WriteString("* OK [CAPABILITY IMAP4rev1 MOVE] ready\r\n"); err != nil {
+					serverDone <- err
+					return
+				}
+				if err := writer.Flush(); err != nil {
+					serverDone <- err
+					return
+				}
+
+				for _, expected := range test.expectedCommands {
+					line, err := reader.ReadString('\n')
+					if err != nil {
+						serverDone <- err
+						return
+					}
+					if !strings.Contains(line, expected) {
+						serverDone <- fmt.Errorf("expected command containing %q, got %q", expected, strings.TrimSpace(line))
+						return
+					}
+
+					tag := strings.Fields(line)[0]
+					if _, err := writer.WriteString(tag + " OK command completed\r\n"); err != nil {
+						serverDone <- err
+						return
+					}
+					if err := writer.Flush(); err != nil {
+						serverDone <- err
+						return
+					}
+				}
+
+				serverDone <- nil
+			}()
+
+			client := imapclient.New(clientConn, nil)
+			if err := client.WaitGreeting(); err != nil {
+				t.Fatalf("expected greeting to succeed: %v", err)
+			}
+
+			im := &Imap{client: client}
+			moveErr := im.MoveMessage(42, "Spam", test.markRead)
+			if err := <-serverDone; err != nil {
+				t.Fatal(err)
+			}
+			if moveErr != nil {
+				t.Fatalf("expected move to succeed: %v", moveErr)
+			}
+		})
+	}
+}
+
 func TestCloseLogsOutGracefully(t *testing.T) {
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {

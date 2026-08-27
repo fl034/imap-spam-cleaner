@@ -68,6 +68,7 @@ inboxes:                          # inboxes to be checked
     host: mail.domain.tld         # imap host
     port: 143                     # imap port
     tls: false                    # imap tls
+    markread: false               # mark spam messages as read before moving them
     username: user@domain.tld     # imap user
     password: mypass              # imap password
     provider: prov1               # provider used for spam analysis

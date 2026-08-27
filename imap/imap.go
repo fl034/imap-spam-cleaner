@@ -226,11 +226,23 @@ func searchCriteria(cfg app.Inbox) *imap.SearchCriteria {
 	return searchCrit
 }
 
-func (i *Imap) MoveMessage(uid imap.UID, mailbox string) error {
+func (i *Imap) MoveMessage(uid imap.UID, mailbox string, markRead bool) error {
 	uidSet := imap.UIDSet{}
 	uidSet.AddNum(uid)
+
+	if markRead {
+		storeFlags := &imap.StoreFlags{
+			Op:     imap.StoreFlagsAdd,
+			Silent: true,
+			Flags:  []imap.Flag{imap.FlagSeen},
+		}
+		if err := i.client.Store(uidSet, storeFlags, nil).Close(); err != nil {
+			return fmt.Errorf("failed to mark message as read: %w", err)
+		}
+	}
+
 	if _, err := i.client.Move(uidSet, mailbox).Wait(); err != nil {
-		return err
+		return fmt.Errorf("failed to move message: %w", err)
 	}
 	return nil
 }

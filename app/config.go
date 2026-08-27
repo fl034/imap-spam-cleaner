@@ -35,6 +35,7 @@ type Inbox struct {
 	Port      int           `yaml:"port"      validate:"required"`
 	TLS       bool          `yaml:"tls"       validate:"omitempty"`
 	Unread    bool          `yaml:"unread"    validate:"omitempty"`
+	MarkRead  bool          `yaml:"markread"  validate:"omitempty"`
 	Username  string        `yaml:"username"  validate:"required"`
 	Password  string        `yaml:"password"  validate:"required"`
 	Provider  string        `yaml:"provider"  validate:"required"`
