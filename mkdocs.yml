@@ -46,6 +46,7 @@ nav:
       - Ollama: providers/ollama.md
       - Gemini: providers/gemini.md
       - Codex CLI: providers/codex.md
+      - Claude Code CLI: providers/claude.md
       - NVIDIA: providers/nvidia.md
       - SpamAssassin: providers/spamassassin.md
       - Rspamd: providers/rspamd.md

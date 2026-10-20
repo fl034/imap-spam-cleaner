@@ -2,7 +2,7 @@
 
 | Field    | Type   | Required | Description                     | Options                            |
 |----------|--------|----------|---------------------------------|------------------------------------|
-| `type`   | string | yes      | Provider implementation         | `openai`, `ollama`, `gemini`, `codex`, `nvidia`, `spamassassin`, `rspamd` |
+| `type`   | string | yes      | Provider implementation         | `openai`, `ollama`, `gemini`, `codex`, `claude`, `nvidia`, `spamassassin`, `rspamd` |
 | `config` | object | yes      | Provider-specific configuration |                                    |
 
 A list of providers, which can be reused by inboxes.

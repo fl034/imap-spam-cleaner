@@ -11,9 +11,10 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
+    environment:
+      - CLAUDE_CODE_OAUTH_TOKEN
     volumes:
       - ./.config.yml:/app/config.yml:ro
-      - ${HOME}/.codex-imap-spam-cleaner:/root/.codex
       - ./store.db:/app/store.db:rw
 
 # SpamAssassin is an optional service

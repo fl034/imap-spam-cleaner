@@ -16,8 +16,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 	go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/imap-spam-cleaner .
 
 FROM node:24-alpine
-ARG CODEX_VERSION=0.149.1
-RUN npm install --global "@openai/codex@${CODEX_VERSION}" \
+ARG CLAUDE_CODE_VERSION=2.1.302
+RUN npm install --global "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
 	&& npm cache clean --force
 WORKDIR /app
 COPY --from=build /out/imap-spam-cleaner /app/imap-spam-cleaner

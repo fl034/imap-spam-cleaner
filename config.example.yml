@@ -38,6 +38,12 @@ providers:                        # providers to be used for inboxes
       model: gpt-5.3-codex        # optional; omit to use the Codex CLI default
       maxsize: 100000             # message size limit for prompt (bytes)
       timeout: 180s               # command timeout
+  prov4b:                         # provider name
+    type: claude                  # local Claude Code CLI provider (subscription)
+    config:
+      model: haiku                # optional; omit to use the Claude Code default
+      maxsize: 100000             # message size limit for prompt (bytes)
+      timeout: 180s               # command timeout
   prov5:                          # provider name
     type: spamassassin            # provider type
     config:                       # provider specific configuration
